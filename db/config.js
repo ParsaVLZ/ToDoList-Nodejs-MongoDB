@@ -1,4 +1,3 @@
-// db/config.js
 const DB_CONFIG = {
     url: 'mongodb://localhost:27017',
     dbName: 'ToDo-List',
