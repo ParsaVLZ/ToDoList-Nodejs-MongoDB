@@ -22,7 +22,7 @@ function taskRoutes(req, res, next) {
                     }
                     insertTask(task).then(newTask => {
                         res.writeHead(201, { 'Content-Type': 'application/json' });
-                        res.end(JSON.stringify(newTask.ops[0])); // Return the newly created task
+                        res.end(JSON.stringify(newTask.ops[0]));
                     }).catch(next);
                 } catch (error) {
                     next(error);
