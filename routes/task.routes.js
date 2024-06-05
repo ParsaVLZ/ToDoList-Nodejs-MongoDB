@@ -1,4 +1,5 @@
 const { insertTask, updateTask, deleteTask, findTasks } = require('../models/task.model');
+const handleError = require('./../handleError');
 
 const VALID_STATUSES = ["in-progress", "canceled", "done"];
 
@@ -73,11 +74,6 @@ async function taskRoutes(req, res) {
     } catch (error) {
         handleError(error, res);
     }
-}
-
-function handleError(error, res) {
-    res.writeHead(500, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: error.message }));
 }
 
 module.exports = taskRoutes;
