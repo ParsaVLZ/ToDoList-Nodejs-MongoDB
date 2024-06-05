@@ -2,17 +2,20 @@ const { insertTask, updateTask, deleteTask, findTasks } = require('../models/tas
 
 const VALID_STATUSES = ["in-progress", "canceled", "done"];
 
-function taskRoutes(req, res, next) {
+async function taskRoutes(req, res) {
     try {
         if (req.method === 'GET' && req.url === '/tasks') {
-            findTasks().then(tasks => {
+            try {
+                const tasks = await findTasks();
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify(tasks));
-            }).catch(next);
+            } catch (err) {
+                handleError(err, res);
+            }
         } else if (req.method === 'POST' && req.url === '/tasks') {
             let body = '';
             req.on('data', chunk => { body += chunk.toString(); });
-            req.on('end', () => {
+            req.on('end', async () => {
                 try {
                     const task = JSON.parse(body);
                     if (!VALID_STATUSES.includes(task.status)) {
@@ -20,19 +23,22 @@ function taskRoutes(req, res, next) {
                         res.end(JSON.stringify({ error: 'Invalid status value' }));
                         return;
                     }
-                    insertTask(task).then(newTask => {
+                    try {
+                        const newTask = await insertTask(task);
                         res.writeHead(201, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify(newTask.ops[0]));
-                    }).catch(next);
+                    } catch (err) {
+                        handleError(err, res);
+                    }
                 } catch (error) {
-                    next(error);
+                    handleError(error, res);
                 }
             });
         } else if (req.method === 'PUT' && req.url.startsWith('/tasks/')) {
             const id = req.url.split('/')[2];
             let body = '';
             req.on('data', chunk => { body += chunk.toString(); });
-            req.on('end', () => {
+            req.on('end', async () => {
                 try {
                     const taskUpdate = JSON.parse(body);
                     if (taskUpdate.status && !VALID_STATUSES.includes(taskUpdate.status)) {
@@ -40,27 +46,38 @@ function taskRoutes(req, res, next) {
                         res.end(JSON.stringify({ error: 'Invalid status value' }));
                         return;
                     }
-                    updateTask(id, taskUpdate).then(updatedTask => {
+                    try {
+                        const updatedTask = await updateTask(id, taskUpdate);
                         res.writeHead(200, { 'Content-Type': 'application/json' });
                         res.end(JSON.stringify(updatedTask));
-                    }).catch(next);
+                    } catch (err) {
+                        handleError(err, res);
+                    }
                 } catch (error) {
-                    next(error);
+                    handleError(error, res);
                 }
             });
         } else if (req.method === 'DELETE' && req.url.startsWith('/tasks/')) {
             const id = req.url.split('/')[2];
-            deleteTask(id).then(() => {
+            try {
+                await deleteTask(id);
                 res.writeHead(204);
                 res.end();
-            }).catch(next);
+            } catch (err) {
+                handleError(err, res);
+            }
         } else {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Not found' }));
         }
     } catch (error) {
-        next(error);
+        handleError(error, res);
     }
+}
+
+function handleError(error, res) {
+    res.writeHead(500, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: error.message }));
 }
 
 module.exports = taskRoutes;
